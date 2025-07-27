@@ -1,6 +1,6 @@
 /*
  * @author: Anthony Ward
- * @upload date: 07/26/2025
+ * @upload date: 07/27/2025
  *
  * Deck of Cards header file with function prototypes
  */
@@ -31,9 +31,14 @@ void gamesMenu(Card *deck);          // Menu for game selection
 
 // Functions in games.c
 void blackjack(Card *deck, unsigned long long *uPlayerMoney);   // Menu for Blackjack game
+void solitaire(Card *deck, unsigned long long *uPlayerMoney);   // Menu for Solitaire game
 
 // Functions in blackjack.c
 void blackjackHowToPlay();   // Instructions for playing Blackjack
 void blackjack_start(Card *deck, unsigned long long *uPlayerMoney);  // Start the Blackjack game
+
+// solitaire.c
+void solitaireHowToPlay();  // Instructions for playing Solitaire
+void solitaire_start(Card *deck, unsigned long long *uPlayerMoney); // Start the Solitaire game
 
 #endif

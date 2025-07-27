@@ -1,6 +1,6 @@
 /*
  * @author: Anthony Ward
- * @upload date: 07/26/2025
+ * @upload date: 07/27/2025
  * 
  * Card processing program that allows for deck creation,
  * shuffling, and printing.
@@ -200,8 +200,8 @@ void gamesMenu(Card *deck) {
                 break;
             case 4:
                 clear_screen();
-                printf("\nGame is currently in development. Press Enter to continue.");
-                getchar(); getchar();
+                printf("=== Solitaire ===\n");
+                solitaire(deck, &uPlayerMoney); // Launch Solitaire game
                 break;
             case 5:
                 clear_screen();

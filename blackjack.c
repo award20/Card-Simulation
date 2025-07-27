@@ -13,8 +13,7 @@
 #include <stdbool.h>
 #include "deck.h"
 
-#define MAX_HAND_CARDS 12   // Maximum number of cards a hand can hold
-#define BASE_BET 100        // Base bet amount for the game
+#define MAX_HAND_CARDS 12   // The maximum number of cards a hand can hold
 
 // Structure to represent the player's hand
 typedef struct {
@@ -41,7 +40,7 @@ static int check_blackjack(Hand *hand);                 // Checks if the hand is
 // Function to display how to play instructions for Blackjack
 void blackjackHowToPlay() {
     clear_screen();   // Clear the screen before showing instructions
-    printf("=== HOW TO PLAY ===\n");
+    printf("=== HOW TO PLAY: 21 BLACKJACK ===\n");
 
     // Game Objective
     printf("\nObjective: Get a hand total as close to 21 without going over. Beat the dealer's hand to win.\n");
@@ -126,6 +125,8 @@ void blackjackHowToPlay() {
 /////////////////////////////
 // 21 Blackjack Game Logic //
 /////////////////////////////
+
+// Function that starts the game and manages gameplay flow
 void blackjack_start(Card *deck, unsigned long long *uPlayerMoney) {
     int deckIndex = 0;
     int roundNumber = 1;          // Round counter
@@ -158,7 +159,7 @@ void blackjack_start(Card *deck, unsigned long long *uPlayerMoney) {
         // Initialize player hands and dealer hand
         Hand playerHand1 = {.count = 0, .bet = bet, .surrendered = 0, .doubled = 0};
         Hand playerHand2 = {.count = 0};
-        bool isSplit = false;     // Flag to check if the player has split the hand
+        int isSplit = false;     // Flag to check if the player has split the hand
         Hand dealerHand = {.count = 0};
 
         *uPlayerMoney -= bet;    // Deduct bet from the player's money
