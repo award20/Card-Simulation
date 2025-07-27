@@ -1,4 +1,4 @@
-# Deck-of-Cards-Simulation v1.1.0
+# Deck of Cards Simulation v1.1.0
 A simple program that simulates real card logic with some applicable use cases.
 
 ### Future games
