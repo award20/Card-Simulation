@@ -1,10 +1,13 @@
-# Deck of Cards Simulation v1.1.0
+# Deck of Cards Simulation v1.2.0
 A simple program that simulates real card logic with some applicable use cases.
+
+### Currently Supported Games
+- 21 Blackjack
+- Klondike Solitaire
 
 ### Future games
 - Texas Hold'em
 - 5-Card Poker
-- Solitaire
 - Rummy
 - Idiot
 
