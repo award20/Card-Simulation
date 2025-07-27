@@ -158,7 +158,7 @@ void blackjack_start(Card *deck, unsigned long long *uPlayerMoney) {
         // Initialize player hands and dealer hand
         Hand playerHand1 = {.count = 0, .bet = bet, .surrendered = 0, .doubled = 0};
         Hand playerHand2 = {.count = 0};
-        int isSplit = false;     // Flag to check if the player has split the hand
+        bool isSplit = false;     // Flag to check if the player has split the hand
         Hand dealerHand = {.count = 0};
 
         *uPlayerMoney -= bet;    // Deduct bet from the player's money
