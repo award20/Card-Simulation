@@ -26,5 +26,14 @@ void clear_screen();      // Clear terminal screen
 void initialize_deck(Card *deck);    // Initialize a deck of cards
 void shuffle_deck(Card *deck);       // Shuffle the deck
 void print_deck(Card *deck);         // Print all cards in the deck
+void deckMenu(Card *deck);           // Main menu for deck operations
+void gamesMenu(Card *deck);          // Menu for game selection
+
+// Functions in games.c
+void blackjack(Card *deck, unsigned long long *uPlayerMoney);   // Menu for Blackjack game
+
+// Functions in blackjack.c
+void blackjackHowToPlay();   // Instructions for playing Blackjack
+void blackjack_start(Card *deck, unsigned long long *uPlayerMoney);  // Start the Blackjack game
 
 #endif
