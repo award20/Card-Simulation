@@ -15,3 +15,7 @@ A simple program that simulates real card logic with some applicable use cases.
 - Variability in Computer Opponent difficulty
 - Support for local multiplayer
 - Support for saving progress in games that take some time to complete (using .dat)
+
+#### In progress development
+- Idiot
+- Support for saving progress in games that take some time to complete (using .dat) [Working in dev version]
