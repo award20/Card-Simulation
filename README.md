@@ -17,5 +17,5 @@ A simple program that simulates real card logic with some applicable use cases.
 - Support for saving progress in games that take some time to complete (using .dat)
 
 #### In progress development
-- Idiot
+- Idiot [over halfway developed]
 - Support for saving progress in games that take some time to complete (using .dat) [Working in dev version]
