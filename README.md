@@ -12,6 +12,7 @@ A simple program that simulates real card logic with some applicable use cases.
 - Reformatted project structure to use cleaner data separation:
   - Moved structs and function prototypes into dedicated header files.
 - Made user selection prompts consistent across all games.
+- Removed some "Magic numbers"
 
 ## Currently Supported Games
 - 21 Blackjack
