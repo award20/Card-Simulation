@@ -1,8 +1,10 @@
 /*
  * @author: Anthony Ward
- * @upload date: 07/27/2025
+ * @upload date: 08/11/2025
  *
  * Deck of Cards header file with function prototypes
+ * 
+ * Pure C implementation.
  */
 
 #ifndef deck_h
@@ -26,19 +28,24 @@ void clear_screen();      // Clear terminal screen
 void initialize_deck(Card *deck);    // Initialize a deck of cards
 void shuffle_deck(Card *deck);       // Shuffle the deck
 void print_deck(Card *deck);         // Print all cards in the deck
-void deckMenu(Card *deck);           // Main menu for deck operations
-void gamesMenu(Card *deck);          // Menu for game selection
+void deckMenu(unsigned long long *uPlayerMoney);           // Main menu for deck operations
+void gamesMenu(unsigned long long *uPlayerMoney);          // Menu for game selection
 
 // Functions in games.c
-void blackjack(Card *deck, unsigned long long *uPlayerMoney);   // Menu for Blackjack game
-void solitaire(Card *deck, unsigned long long *uPlayerMoney);   // Menu for Solitaire game
+void blackjack(unsigned long long *uPlayerMoney);   // Menu for Blackjack game
+void solitaire(unsigned long long *uPlayerMoney);   // Menu for Solitaire game
+void idiot(unsigned long long *uPlayerMoney);   // Menu for Idiot game
 
 // Functions in blackjack.c
 void blackjackHowToPlay();   // Instructions for playing Blackjack
-void blackjack_start(Card *deck, unsigned long long *uPlayerMoney);  // Start the Blackjack game
+void blackjack_start(unsigned long long *uPlayerMoney);  // Start the Blackjack game
 
 // solitaire.c
 void solitaireHowToPlay();  // Instructions for playing Solitaire
-void solitaire_start(Card *deck, unsigned long long *uPlayerMoney); // Start the Solitaire game
+void solitaire_start(unsigned long long *uPlayerMoney); // Start the Solitaire game
+
+// solitaire.c
+void idiotHowToPlay();  // Instructions for playing Idiot
+void idiot_start(unsigned long long *uPlayerMoney); // Start the Idiot game
 
 #endif

@@ -1,8 +1,10 @@
 /*
  * @author: Anthony Ward
- * @upload date: 07/26/2025
+ * @upload date: 08/11/2025
  *
  * 21 Blackjack implementation using card logic
+ * 
+ * Pure C implementation.
  */
 
 #include <stdio.h>
@@ -12,26 +14,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include "deck.h"
-
-#define MAX_HAND_CARDS 12   // The maximum number of cards a hand can hold
-
-// Structure to represent the player's hand
-typedef struct {
-    Card cards[MAX_HAND_CARDS];  // Array to hold the cards in the hand
-    int count;                   // Number of cards in the hand
-    unsigned int bet;            // The bet placed on this hand
-    int surrendered;             // Flag indicating if the player surrendered (1 if true)
-    int doubled;                 // Flag indicating if the player doubled the bet (1 if true)
-    int fromSplit;               // Flag indicating if this hand is from a split (1 if true)
-} Hand;
-
-// Function declarations for internal functions (not accessible outside this file)
-static int get_hand_value(Hand *hand);                  // Calculates the value of a hand
-static void print_hand(const char *name, Hand *hand);    // Prints the cards in a hand
-static void deal_card(Card *deck, int *deckIndex, Hand *hand); // Deals a card to a hand
-static int is_pair(Hand *hand);                         // Checks if the hand is a pair (for splitting)
-static void play_hand(Card *deck, int *deckIndex, Hand *hand, unsigned long long *uPlayerMoney, int roundNumber); // Plays the hand
-static int check_blackjack(Hand *hand);                 // Checks if the hand is a Blackjack
+#include "blackjack.h"
 
 //////////////////////////////
 // How to play instructions //
@@ -127,7 +110,8 @@ void blackjackHowToPlay() {
 /////////////////////////////
 
 // Function that starts the game and manages gameplay flow
-void blackjack_start(Card *deck, unsigned long long *uPlayerMoney) {
+void blackjack_start(unsigned long long *uPlayerMoney) {
+    Card deck[DECK_SIZE];  // Array to hold the deck of cards
     int deckIndex = 0;
     int roundNumber = 1;          // Round counter
     unsigned int maxBet = 500;    // Maximum bet
@@ -182,7 +166,7 @@ void blackjack_start(Card *deck, unsigned long long *uPlayerMoney) {
             printf("Dealer shows Ace. Take insurance for $50?\n");
             printf("1: Yes\n");
             printf("2: No\n");
-            printf("\nEnter Selection: ");
+            printf("\n> ");
             scanf("%d", &choice);
             if (choice == 1) {
                 if (check_blackjack(&dealerHand)) {   // Check if dealer has Blackjack
@@ -220,7 +204,7 @@ void blackjack_start(Card *deck, unsigned long long *uPlayerMoney) {
             printf("\nYou have a pair. Split?\n");
             printf("1: Yes\n");
             printf("2: No\n");
-            printf("\nEnter Selection: ");
+            printf("\n> ");
             scanf("%d", &choice);
             if (choice == 1) {  // Player chooses to split
                 if (*uPlayerMoney < bet) {
@@ -328,7 +312,7 @@ void blackjack_start(Card *deck, unsigned long long *uPlayerMoney) {
         printf("\nPlay another round?\n");
         printf("1: Yes\n");
         printf("2: No\n");
-        printf("\nEnter Selection: ");
+        printf("\n> ");
         scanf("%d", &again);  // Get player's choice
         clear_screen();
         if (again != 1) break;  // Exit game if player chooses 'No'
@@ -426,7 +410,7 @@ static void play_hand(Card *deck, int *deckIndex, Hand *hand, unsigned long long
         if (firstTurn) {  // If it's the player's first turn, allow Surrender and Double Down
             printf("3: Surrender (-50%%)\n4: Double Down\n");
         }
-        printf("Enter Selection: ");
+        printf("> ");
         scanf("%d", &choice);  // Get the player's action choice
 
         // Process the player's action based on their choice

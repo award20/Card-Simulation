@@ -1,12 +1,12 @@
 /*
  * @author: Anthony Ward
- * @upload date: 07/27/2025
+ * @upload date: 08/11/2025
  *
  * Klondike Solitaire game implementation.
  *
  * This file contains the game logic for Klondike Solitaire,
  * including the setup, rules, and actions for playing the game.
- * It allows users to interact with the tableau, draw pile, waste pile,
+ * It allows users to interact with the table, draw pile, waste pile,
  * and foundation piles in an attempt to move all cards to the foundations.
  */
 
@@ -16,43 +16,31 @@
 #include <time.h>
 #include <stdbool.h>
 #include "deck.h"
-
-#define COLUMNS 7           // The number of columns for cards to be placed
-#define FOUNDATION_PILES 4  // The number of foundation piles that hold cards in ascending order
-#define MAX_DRAW_STACK 52   // The maximum number of cards that can exist in the draw pile
-#define MAX_FOUNDATION 13   // The maximum number of cards that can exist in the foundation piles
-
-// Define a Stack structure to hold cards
-typedef struct {
-    Card cards[MAX_DRAW_STACK];
-    int count;
-} Stack;
-
-// Define the main game structure (KlondikeGame)
-typedef struct {
-    Card table[COLUMNS][MAX_DRAW_STACK];     // 2D array for tableau (columns of cards)
-    int table_counts[COLUMNS];               // Array to store the number of cards in each column
-    Stack drawPile;                          // Stack for the remaining cards (draw pile)
-    Stack wastePile;                         // Stack for the discarded cards (waste pile)
-    Stack foundation[FOUNDATION_PILES];      // Array of foundation piles (4 suits)
-    int difficulty;                          // Game difficulty (1: Easy, 2: Normal, 3: Hard)
-} KlondikeGame;
+#include "solitaire.h"
 
 // Save/undo buffer and flag for undo functionality
 KlondikeGame undoBuffer;
 int hasUndo = 0;
 
-void solitaire_start(Card *deck, unsigned long long *uPlayerMoney); // Starts the Solitaire game
-void solitaireHowToPlay();  // Displays the how-to-play instructions for the user
-static void setup_klondike(KlondikeGame *game, Card *deck); // Initializes the game setup (table, foundation, draw pile, etc.)
-static void display_game(KlondikeGame *game);   // Displays the current state of the game
-static void draw_card(KlondikeGame *game);  // Draws cards from the draw pile to the waste pile
-static bool play_klondike(KlondikeGame *game);  // The main game loop where the player interacts with the game
-static int can_move_to_foundation(Card card, Stack *foundation);    // Checks if a card can be moved to a foundation pile
-static int can_move_to_table(Card card, Card dest); // Check if a card can be moved to a table column
-static int is_red(Card card);   // Checks if a card is red (Hearts or Diamonds)
-static void create_undo(KlondikeGame *game);    // Saves the curren state of the game to allow undo functionality
-static void undo_move(KlondikeGame *game);  // Undoes the last move and restores the game state
+// Save the current game state to a file
+static int save_game(KlondikeGame *game, unsigned long long uPlayerMoney) {
+    FILE *f = fopen(GAME_SAVE, "wb");
+    if (!f) return 0;
+    fwrite(game, sizeof(KlondikeGame), 1, f);
+    fwrite(&uPlayerMoney, sizeof(unsigned long long), 1, f);
+    fclose(f);
+    return 1;
+}
+
+// Load the game state from a file
+static int load_game(KlondikeGame *game, unsigned long long *uPlayerMoney) {
+    FILE *f = fopen(GAME_SAVE, "rb");
+    if (!f) return 0;
+    fread(game, sizeof(KlondikeGame), 1, f);
+    fread(uPlayerMoney, sizeof(unsigned long long), 1, f);
+    fclose(f);
+    return 1;
+}
 
 // Function to create an undo buffer of the current game state
 void create_undo(KlondikeGame *game) {
@@ -88,15 +76,15 @@ void solitaireHowToPlay() {
 
     // Setup section
     printf("--- Setup ---\n");
-    printf("1. Seven tableau columns with cards laid face down, with only the top card face up.\n");
+    printf("1. Seven table columns with cards laid face down, with only the top card face up.\n");
     printf("2. A draw pile containing the remaining cards.\n");
     printf("3. Four foundation piles for each suit.\n\n");
 
     // Controls section
     printf("--- Controls ---\n");
-    printf("1. Move cards between tableau columns and foundation piles.\n");
-    printf("2. Only King can be moved to an empty tableau column.\n");
-    printf("3. Cards must follow alternating colors in descending order in tableau columns.\n");
+    printf("1. Move cards between table columns and foundation piles.\n");
+    printf("2. Only King can be moved to an empty table column.\n");
+    printf("3. Cards must follow alternating colors in descending order in table columns.\n");
     printf("4. Cards can be drawn from the draw pile to the waste pile.\n\n");
 
     // Difficulty section
@@ -113,14 +101,32 @@ void solitaireHowToPlay() {
     getchar(); getchar();
     clear_screen();
 }
+
 //////////////////////////
 // Solitaire Game Logic //
 //////////////////////////
 
 // Function that starts the game and manages gameplay flow
-void solitaire_start(Card *deck, unsigned long long *uPlayerMoney) {
+void solitaire_start(unsigned long long *uPlayerMoney) {
     KlondikeGame game;
+    int won;
     srand(time(NULL));  // Initialize random seed
+
+
+    if (load_game(&game, uPlayerMoney)) {
+        printf("A saved game was found. Would you like to load it?\n");
+        printf("1: Yes\n");
+        printf("2: No\n");
+        printf("\n> ");
+        int choice;
+        scanf("%d", &choice);
+        if (choice != 1) goto fresh_game;
+        else won = play_klondike(&game, uPlayerMoney, 0);
+    }
+    else {
+        printf("No saved game found. Starting a new game.\n");
+        goto fresh_game;  // Jump to the fresh game initialization section
+    }   
 
     goto fresh_game;  // Jump to the fresh game initialization section
 
@@ -130,15 +136,17 @@ fresh_game:
     printf("1: Easy\n");
     printf("2: Normal\n");
     printf("3: Hard\n");
-    printf("Enter choice: ");
+    printf("> ");
     scanf("%d", &game.difficulty);  // Get difficulty choice from the player
 
     unsigned int bet = 0;
     unsigned int minBet = 10;
     unsigned int maxBet = 100;
+    int normal = 2;
+    int hard = 3;
 
     // Bet selection for non-Easy modes
-    if (game.difficulty == 2 || game.difficulty == 3) {
+    if (game.difficulty == normal || game.difficulty == hard) {
         do {
             if (*uPlayerMoney > maxBet) 
                 printf("Enter your bet ($%d - $%d): ", minBet, maxBet);
@@ -150,6 +158,7 @@ fresh_game:
     }
 
     // Initialize and shuffle deck for a fresh game
+    Card deck[DECK_SIZE];
     initialize_deck(deck);
     for (int i = 0; i < DECK_SIZE; i++) {
         deck[i].revealed = 0;  // Set all cards as face down initially
@@ -160,16 +169,16 @@ fresh_game:
     setup_klondike(&game, deck);
 
     // Main gameplay loop
-    int won = play_klondike(&game);  // Call the game loop to play the solitaire game
+    won = play_klondike(&game, uPlayerMoney, bet);  // Call the game loop to play the solitaire game
 
     // Game outcome handling
     if (won) {
         clear_screen();
-        if (game.difficulty == 2) {
+        if (game.difficulty == normal) {
             *uPlayerMoney += bet * 2;
             printf("You win! Earned 2x your bet: $%d\n", bet * 2);
         }
-        else if (game.difficulty == 3) {
+        else if (game.difficulty == hard) {
             *uPlayerMoney += bet * 5;
             printf("You win! Earned 5x your bet: $%d\n", bet * 5);
         }
@@ -187,12 +196,16 @@ fresh_game:
     clear_screen();
 }
 
+//////////////////////
+// Helper Functions //
+//////////////////////
+
 // Function to initialize the game setup (table, foundation, etc.)
 static void setup_klondike(KlondikeGame *game, Card *deck) {
     int deckIndex = 0;
     for (int i = 0; i < COLUMNS; i++) {
         for (int j = 0; j <= i; j++) {
-            game->table[i][j] = deck[deckIndex++];  // Place cards in the tableau columns
+            game->table[i][j] = deck[deckIndex++];  // Place cards in the table columns
             game->table[i][j].revealed = (j == i);  // Only the top card is revealed
         }
         game->table_counts[i] = i + 1;  // Store the number of cards in each column
@@ -237,7 +250,7 @@ static void display_game(KlondikeGame *game) {
         }
     }
 
-    // Display the tableau columns
+    // Display the table columns
     for (int i = 0; i < COLUMNS; i++) {
         printf("Column %d: ", i + 1);
         for (int j = 0; j < game->table_counts[i]; j++) {
@@ -254,7 +267,9 @@ static void display_game(KlondikeGame *game) {
 
 // Function to draw a card from the draw pile to the waste pile
 static void draw_card(KlondikeGame *game) {
-    int drawCount = (game->difficulty == 3) ? 3 : 1;  // Determine how many cards to draw (based on difficulty)
+    int easy = 1;
+    int hard = 3;
+    int drawCount = (game->difficulty == hard) ? 3 : 1;  // Determine how many cards to draw (based on difficulty)
     int actualDraw = (game->drawPile.count < drawCount) ? game->drawPile.count : drawCount;
 
     if (actualDraw > 0) {
@@ -262,7 +277,7 @@ static void draw_card(KlondikeGame *game) {
             game->wastePile.cards[game->wastePile.count++] = game->drawPile.cards[--game->drawPile.count];  // Move card to waste pile
         }
     } 
-    else if (game->difficulty == 1 && game->wastePile.count > 0) {
+    else if (game->difficulty == easy && game->wastePile.count > 0) {
         // Recycle waste into draw pile if on Easy mode
         for (int i = game->wastePile.count - 1; i >= 0; i--) {
             game->drawPile.cards[game->drawPile.count++] = game->wastePile.cards[i];
@@ -312,7 +327,7 @@ static int card_value(Card card) {
     return atoi(card.rank);  // Return the integer value of the card
 }
 
-// Function to check if a card can be moved to a tableau column
+// Function to check if a card can be moved to a table column
 static int can_move_to_table(Card card, Card dest) {
     // Compare the card's value and the destination card's value
     int cardVal = card_value(card);
@@ -321,16 +336,19 @@ static int can_move_to_table(Card card, Card dest) {
     return is_red(card) != is_red(dest) && cardVal == destVal - 1;
 }
 
-/* 
- * Function to handle moving cards between piles in the game.
- * This function allows the user to move cards between different piles: 
- * waste to foundation, waste to columns, columns to columns, etc.
- */
+// Function to handle moving cards based on user input
 static void move_card(KlondikeGame *game) {
     int choice;  // Variable to hold user's choice for moving cards
 
     // Prompt the user to choose which type of move to make
-    printf("\n1: Waste to foundation\n2: Waste to column\n3: Column to column\n4: Column to foundation\n5: Foundation to column\n6: Cancel\nChoice: ");
+    printf("\n");
+    printf("1: Waste to foundation\n");
+    printf("2: Waste to column\n");
+    printf("3: Column to column\n");
+    printf("4: Column to foundation\n");
+    printf("5: Foundation to column\n");
+    printf("6: Cancel\n");
+    printf("> ");
     scanf("%d", &choice);  // Get the user's choice
 
     // Create an undo buffer before making any changes
@@ -349,7 +367,7 @@ static void move_card(KlondikeGame *game) {
             }
         }
     }
-    // Handle waste to column move (moving top card from waste pile to tableau column)
+    // Handle waste to column move (moving top card from waste pile to table column)
     else if (choice == 2 && game->wastePile.count > 0) {
         Card card = game->wastePile.cards[game->wastePile.count - 1]; // Get the top card of the waste pile
         int dest;  // Destination column for the move
@@ -372,7 +390,7 @@ static void move_card(KlondikeGame *game) {
             }
         } 
     }
-    // Handle column to column move (moving card from one tableau column to another)
+    // Handle column to column move (moving card from one table column to another)
     else if (choice == 3) {
         int from, to;
         printf("From column #: ");
@@ -434,7 +452,7 @@ static void move_card(KlondikeGame *game) {
             }
         }
     }
-    // Handle foundation to column move (moving top card from foundation to a tableau column)
+    // Handle foundation to column move (moving top card from foundation to a table column)
     else if (choice == 5) {
         int from, to;
         printf("From foundation #: ");
@@ -450,7 +468,7 @@ static void move_card(KlondikeGame *game) {
             if ((game->table_counts[to] == 0 && strcmp(card.rank, "King") == 0) ||
                 (game->table_counts[to] > 0 && can_move_to_table(card, game->table[to][game->table_counts[to] - 1]))) {
                 card.revealed = 1;  // Reveal the card
-                game->table[to][game->table_counts[to]++] = card;  // Move the card to the tableau column
+                game->table[to][game->table_counts[to]++] = card;  // Move the card to the table column
                 game->foundation[from].count--;  // Remove the card from the foundation
             }
         }
@@ -461,42 +479,170 @@ static void move_card(KlondikeGame *game) {
 }
 
 // Function that handles the main game loop for Solitaire
-static bool play_klondike(KlondikeGame *game) {
+static bool play_klondike(KlondikeGame *game, unsigned long long *uPlayerMoney, unsigned int bet) {
     int action;
+    int easy = 1;
+    int normal = 2;
+    int hard = 3;
     while (1) {
         display_game(game);  // Display the current game state
         printf("\nOptions:\n");
         printf("1: Draw card\n");
         printf("2: Move card\n");
-        if (game->difficulty == 1) {
+        int autoOption = 0;
+        if (game->difficulty == easy) {
             printf("3: Undo move\n");
             printf("4: Quit game\n");
+            autoOption = 5;
         }
         else {
             printf("3: Quit game\n");
+            autoOption = 4;
         }
-        printf("Enter action: ");
-        scanf("%d", &action);  // Get the user's action
+        if (can_auto_complete(game)) {
+            printf("%d: Auto Complete\n", autoOption);
+        }
+        printf("> ");
+        scanf("%d", &action);
 
         if (action == 1) {
-            create_undo(game);  // Save the current game state before drawing
-            draw_card(game);  // Draw a card
+            create_undo(game);
+            draw_card(game);
         }
         else if (action == 2) {
-            move_card(game);  // Move a card
+            move_card(game);
         }
-        else if (action == 3 && game->difficulty == 1) {
-            undo_move(game);  // Undo the last move (if available)
+        else if (action == 3 && game->difficulty == easy) {
+            undo_move(game);
         } 
+        else if ((game->difficulty == easy && action == 4) || (game->difficulty != easy && action == 3)) {
+            FILE *f = fopen(GAME_SAVE, "rb");
+            int save;
+            do {
+                if (f) {
+                    fclose(f);  // Close the file if it exists
+                    printf("\nA saved game was found. Would you like to overwrite the saved game?\n");
+                    printf("1: Yes\n");
+                    printf("2: No\n");
+                    printf("\n> ");
+                    scanf("%d", &save);
+                    
+                    switch (save) {
+                        case 1:
+                            remove(GAME_SAVE);  // Remove the existing save file
+                            save_game(game, *uPlayerMoney);  // Save the game state
+                            printf("Game saved successfully.\n");
+                            solitaire(uPlayerMoney);  // Return to the main menu
+                            return 0;  // Exit the game
+                        case 2:
+                            break;
+                        default:
+                            printf("Invalid selection\n");
+                            continue;  // Prompt again for valid input
+                    }
+                }
+                else {
+                    printf("\nWould you like to save the game before quitting?\n");
+                    printf("1: Yes\n");
+                    printf("2: No\n");
+                    printf("\n> ");
+                    scanf("%d", &save);
 
-        if ((game->difficulty == 1 && action == 4) || (game->difficulty != 1 && action == 3)) {
-            int complete = 0;
-            // Check if all foundation piles are complete (if so, the player wins)
-            for (int i = 0; i < FOUNDATION_PILES; i++) {
-                if (game->foundation[i].count == MAX_FOUNDATION) complete++;
-            }
-            if (complete == FOUNDATION_PILES) return true;  // If all foundations are complete, return true (game won)
+                    switch (save) {
+                        case 1:
+                            save_game(game, *uPlayerMoney);  // Save the game state
+                            printf("Game saved successfully.\n");
+                            solitaire(uPlayerMoney);  // Return to the main menu
+                            break;  // Exit the save prompt
+                        case 2:
+                            break;
+                        default:
+                            printf("Invalid selection\n");
+                            continue;
+                    }
+                }                
+            } while (save != 1 && save != 2);
+            return 0;
         }
-    return false;  // If the game isn't complete yet, continue playing
+        else if (can_auto_complete(game) && action == autoOption) {
+            auto_complete(game);
+            printf("\nAuto Complete finished! You win!\n");
+            if (game->difficulty == normal) {
+                *uPlayerMoney += bet * 2;
+                printf("You win! Earned 2x your bet: $%d\n", bet * 2);
+            }
+            else if (game->difficulty == hard) {
+                *uPlayerMoney += bet * 5;
+                printf("You win! Earned 5x your bet: $%d\n", bet * 5);
+            }
+            else {
+                printf("You won (Easy Mode).\n");
+            }
+        }
+            return 1;
+
+        // ...existing win check...
+        int complete = 0;
+        for (int i = 0; i < FOUNDATION_PILES; i++) {
+            if (game->foundation[i].count == MAX_FOUNDATION) complete++;
+        }
+        if (complete == FOUNDATION_PILES) return 1;
     }
+    return 0;
+}
+
+// Function to automatically complete the game by moving cards to foundations
+static void auto_complete(KlondikeGame *game) {
+    int moved;
+    do {
+        moved = 0;
+        // Move all possible cards from table columns to foundation
+        for (int col = 0; col < COLUMNS; col++) {
+            if (game->table_counts[col] > 0) {
+                Card card = game->table[col][game->table_counts[col] - 1];
+                if (card.revealed) {
+                    for (int f = 0; f < FOUNDATION_PILES; f++) {
+                        if (can_move_to_foundation(card, &game->foundation[f])) {
+                            game->foundation[f].cards[game->foundation[f].count++] = card;
+                            game->table_counts[col]--;
+                            if (game->table_counts[col] > 0)
+                                game->table[col][game->table_counts[col] - 1].revealed = 1;
+                            moved = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        // Move all possible cards from waste to foundation
+        if (game->wastePile.count > 0) {
+            Card card = game->wastePile.cards[game->wastePile.count - 1];
+            for (int f = 0; f < FOUNDATION_PILES; f++) {
+                if (can_move_to_foundation(card, &game->foundation[f])) {
+                    game->foundation[f].cards[game->foundation[f].count++] = card;
+                    game->wastePile.count--;
+                    moved = 1;
+                    break;
+                }
+            }
+        }
+    } while (moved);
+}
+
+// Function to check if the game can be auto-completed
+static int can_auto_complete(KlondikeGame *game) {
+    // All table cards must be revealed
+    for (int col = 0; col < COLUMNS; col++) {
+        for (int i = 0; i < game->table_counts[col]; i++) {
+            if (!game->table[col][i].revealed) return 0;
+        }
+    }
+    // Each foundation must have at least a 5
+    for (int f = 0; f < FOUNDATION_PILES; f++) {
+        if (game->foundation[f].count == 0) return 0;
+        Card top = game->foundation[f].cards[game->foundation[f].count - 1];
+        int val = card_value(top);
+        if (val < 5) return 0;
+    }
+    return 1;
 }
