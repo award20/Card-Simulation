@@ -1,42 +1,40 @@
-# Deck of Card Simulation - v1.3.0
-**Release Date:** 08/11/2025
+# Deck of Card Simulation - v1.4.0
+**Release Date:** 2025-08-24  
 
-A simple program that simulates real card logic with some applicable use cases.
+A program that simulates realistic card game logic with multiple playable games.  
 
 ## Added
-- Implemented full **Idiot** card game.
-- Added support for saving and loading a game of **Solitaire**, with overwrite capability.
-- Added an **Auto Complete** feature to solitaire.
+- **Achievements**: Unlockable achievements for each supported game.  
+- **Autosave**: Games now save progress automatically.  
+- **Multiple Save Slots**: Added support for multiple save slots in **Solitaire**.  
+- **Winnable Solitaire Deals**: Implemented a Depth First Search (DFS) system with transposition tables, move ordering, pruning heuristics, and forced move passes to ensure solvable Solitaire boards.  
+- **Player Data Persistence**: Tracks and saves progress and features across sessions.  
+- **Other Menu**: New menu with options to change game rules, view stats, and reset player data.  
 
 ## Changed
-- Reformatted project structure to use cleaner data separation:
-  - Moved structs and function prototypes into dedicated header files.
-- Made user selection prompts consistent across all games.
-- Removed some "magic numbers"
+- Reorganized project folder structure for clarity.  
+- Reformatted the entire codebase for consistency.  
+- Updated commenting style to improve readability and maintainability.  
+- Updated **Idiot** bot difficulty
+- Update deck handling in **21 Blackjack**
 
 ## Currently Supported Games
-- 21 Blackjack
-- Klondike Solitaire
-- Idiot
+- 21 Blackjack  
+- Klondike Solitaire  
+- Idiot  
 
 ## Planned Games
-- Texas Hold'em
-- 5-Card Poker
-- Rummy
-- Go Fish
-- War
-- Spades
-- Crazy Eights
+- Texas Hold'em  
+- 5-Card Poker  
+- Rummy  
+- Go Fish  
+- War  
+- Spades  
+- Crazy Eights  
 
-## Planned Features
-_* = tentative_
-- Support for local multiplayer (pass the keyboard)
-- Statistics tracking (wins, losses, streaks for each game)
-- Multiple save slots per game type
-- Customizable rules (e.g. number of decks, Jokers on/off, etc)
-- Ensure winnable solitaire deals (*)
-- LAN/Network play (*)
-- GUI implementation using OpenGL (*)
-- Machine learning AI for computer opponents (*)
+## Planned Features (* = tentative)
+- Local and network multiplayer support (*).  
+- GUI implementation using OpenGL (*).  
+- Machine learning AI for computer opponents (*).
 
-**Full Changelog**: https://github.com/award20/Card-Simulation/compare/v1.2.0...v1.3.0
+**Full Changelog**: https://github.com/award20/Card-Simulation/compare/v1.3.0...v1.4.0
