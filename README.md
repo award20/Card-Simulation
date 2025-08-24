@@ -32,7 +32,8 @@ A program that simulates realistic card game logic with multiple playable games.
 - Spades  
 - Crazy Eights  
 
-## Planned Features (* = tentative)
+## Planned Features
+_* = tentative_
 - Local and network multiplayer support (*).  
 - GUI implementation using OpenGL (*).  
 - Machine learning AI for computer opponents (*).
